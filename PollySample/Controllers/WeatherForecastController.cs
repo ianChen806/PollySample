@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace PollySample.Controllers
 {
@@ -27,7 +28,9 @@ namespace PollySample.Controllers
         public async Task<HttpResponseMessage> Get()
         {
             var httpClient = _clientFactory.CreateClient("Test");
-            return await httpClient.PostAsync("http://tasdasdxcsswweest.com",null);
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "http://www.google.com");
+            httpRequestMessage.SetPolicyExecutionContext(new Polly.Context("8888"));
+            return await httpClient.SendAsync(httpRequestMessage);
         }
     }
 }
