@@ -1,10 +1,14 @@
 using System;
+using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
 using Polly.Registry;
@@ -27,20 +31,19 @@ namespace PollySample
         {
             services.AddControllers();
 
-            var retryPolicy = HttpPolicyExtensions
-                              .HandleTransientHttpError()
-                              .WaitAndRetryAsync(new[]
-                                                 {
-                                                     TimeSpan.FromSeconds(1),
-                                                     TimeSpan.FromSeconds(5),
-                                                     TimeSpan.FromSeconds(10)
-                                                 },
-                                                 onRetryAsync: async (outcome, timespan, retryCount, context) =>
-                                                 {
-                                                     Console.WriteLine(context["TestValue"]);
-                                                 });
             services.AddHttpClient("Test")
-                    .AddPolicyHandler(retryPolicy);
+                    .AddPolicyHandler((provider, message) =>
+                                          HttpPolicyExtensions
+                                              .HandleTransientHttpError()
+                                              .WaitAndRetryAsync(new[]
+                                                                 {
+                                                                     TimeSpan.FromSeconds(1),
+                                                                 },
+                                                                 (outcome, timespan, retryCount, context) =>
+                                                                 {
+                                                                     var logger = provider.GetService<ILogger<HttpClient>>();
+                                                                     logger.LogError("Error");
+                                                                 }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

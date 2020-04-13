@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,7 @@ namespace PollySample.Controllers
             var httpClient = _clientFactory.CreateClient("Test");
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "http://www.gooasdasdasdgle.com");
             httpRequestMessage.SetPolicyExecutionContext(context);
+
             return await httpClient.SendAsync(httpRequestMessage);
         }
     }
