@@ -1,11 +1,12 @@
 using System;
-using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Polly;
+using Polly.Extensions.Http;
+using Polly.Registry;
 using Polly.Retry;
 using Polly.Timeout;
 
@@ -25,26 +26,28 @@ namespace PollySample
         {
             services.AddControllers();
 
-            var policySelector = Policy.Handle<HttpRequestException>()
-                                       .OrResult<HttpResponseMessage>(r => true)
-                                       .WaitAndRetryAsync(new[]
-                                       {
-                                           TimeSpan.FromSeconds(1), 
-                                           TimeSpan.FromSeconds(3), 
-                                           TimeSpan.FromSeconds(5), 
-                                       });
-            var noOpPolicy = Policy.NoOpAsync().AsAsyncPolicy<HttpResponseMessage>();
-            services.AddHttpClient("Test", client =>
-                    {
-                    })
-                    .AddPolicyHandler(message => message.Method == HttpMethod.Get
-                                          ? policySelector
-                                          : noOpPolicy);
-        }
+            var keyValuePairs = new PolicyRegistry()
+            {
+                {
+                    "Test", HttpPolicyExtensions.HandleTransientHttpError()
+                                                .WaitAndRetryAsync(new[]
+                                                {
+                                                    TimeSpan.FromSeconds(1),
+                                                    TimeSpan.FromSeconds(3),
+                                                    TimeSpan.FromSeconds(5),
+                                                })
+                },
+                {
+                    "No", HttpPolicyExtensions.HandleTransientHttpError()
+                                              .CircuitBreakerAsync(10,
+                                                                   TimeSpan.FromSeconds(10))
+                },
+            };
+            services.AddPolicyRegistry(keyValuePairs);
 
-        private bool TestPredicate(HttpResponseMessage message)
-        {
-            return true;
+            services.AddHttpClient("Test")
+                    .AddPolicyHandlerFromRegistry("Test")
+                    .AddPolicyHandlerFromRegistry("No");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
