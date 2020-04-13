@@ -27,9 +27,12 @@ namespace PollySample.Controllers
         [HttpGet]
         public async Task<HttpResponseMessage> Get()
         {
+            var context = new Polly.Context("8888");
+            context["TestValue"] = "test";
+            
             var httpClient = _clientFactory.CreateClient("Test");
-            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "http://www.google.com");
-            httpRequestMessage.SetPolicyExecutionContext(new Polly.Context("8888"));
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "http://www.gooasdasdasdgle.com");
+            httpRequestMessage.SetPolicyExecutionContext(context);
             return await httpClient.SendAsync(httpRequestMessage);
         }
     }

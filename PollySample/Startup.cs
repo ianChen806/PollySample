@@ -27,20 +27,20 @@ namespace PollySample
         {
             services.AddControllers();
 
-            services.AddPolicyRegistry(new PolicyRegistry()
-            {
-                {
-                    "No", HttpPolicyExtensions.HandleTransientHttpError()
-                                              .CircuitBreakerAsync(1,
-                                                                   TimeSpan.FromSeconds(10))
-                },
-                {
-                    "Test", Policy.BulkheadAsync<HttpResponseMessage>(1)
-                },
-            });
-
+            var retryPolicy = HttpPolicyExtensions
+                              .HandleTransientHttpError()
+                              .WaitAndRetryAsync(new[]
+                                                 {
+                                                     TimeSpan.FromSeconds(1),
+                                                     TimeSpan.FromSeconds(5),
+                                                     TimeSpan.FromSeconds(10)
+                                                 },
+                                                 onRetryAsync: async (outcome, timespan, retryCount, context) =>
+                                                 {
+                                                     Console.WriteLine(context["TestValue"]);
+                                                 });
             services.AddHttpClient("Test")
-                    .AddPolicyHandlerFromRegistry("Test");
+                    .AddPolicyHandler(retryPolicy);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
