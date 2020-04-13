@@ -1,15 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace PollySample
 {
@@ -26,6 +21,19 @@ namespace PollySample
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            services.AddHttpClient("Test", client =>
+                    {
+                    })
+                    .AddTransientHttpErrorPolicy(builder =>
+                    {
+                        return builder.WaitAndRetryAsync(new[]
+                        {
+                            TimeSpan.FromSeconds(1),
+                            TimeSpan.FromSeconds(5),
+                            TimeSpan.FromSeconds(10),
+                        });
+                    });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

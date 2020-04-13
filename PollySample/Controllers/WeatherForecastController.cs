@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,23 +15,19 @@ namespace PollySample.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger,IHttpClientFactory clientFactory)
         {
             _logger = logger;
+            _clientFactory = clientFactory;
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public async Task<HttpResponseMessage> Get()
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-                             {
-                                 Date = DateTime.Now.AddDays(index),
-                                 TemperatureC = rng.Next(-20, 55),
-                                 Summary = Summaries[rng.Next(Summaries.Length)]
-                             })
-                             .ToArray();
+            var httpClient = _clientFactory.CreateClient("Test");
+            return await httpClient.GetAsync("http://tasdasdxcsswweest.com");
         }
     }
 }
