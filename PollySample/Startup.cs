@@ -25,11 +25,21 @@ namespace PollySample
         {
             services.AddControllers();
 
-            var policySelector = Policy.TimeoutAsync<HttpResponseMessage>(1);
+            var policySelector = Policy.Handle<HttpRequestException>()
+                                       .OrResult<HttpResponseMessage>(r => true)
+                                       .WaitAndRetryAsync(new[]
+                                       {
+                                           TimeSpan.FromSeconds(1), 
+                                           TimeSpan.FromSeconds(3), 
+                                           TimeSpan.FromSeconds(5), 
+                                       });
+            var noOpPolicy = Policy.NoOpAsync().AsAsyncPolicy<HttpResponseMessage>();
             services.AddHttpClient("Test", client =>
                     {
                     })
-                    .AddPolicyHandler(policySelector);
+                    .AddPolicyHandler(message => message.Method == HttpMethod.Get
+                                          ? policySelector
+                                          : noOpPolicy);
         }
 
         private bool TestPredicate(HttpResponseMessage message)

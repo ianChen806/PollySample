@@ -27,7 +27,7 @@ namespace PollySample.Controllers
         public async Task<HttpResponseMessage> Get()
         {
             var httpClient = _clientFactory.CreateClient("Test");
-            return await httpClient.GetAsync("http://tasdasdxcsswweest.com");
+            return await httpClient.PostAsync("http://tasdasdxcsswweest.com",null);
         }
     }
 }
