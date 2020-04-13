@@ -26,27 +26,16 @@ namespace PollySample
         {
             services.AddControllers();
 
-            var keyValuePairs = new PolicyRegistry()
+            services.AddPolicyRegistry(new PolicyRegistry()
             {
                 {
-                    "Test", HttpPolicyExtensions.HandleTransientHttpError()
-                                                .WaitAndRetryAsync(new[]
-                                                {
-                                                    TimeSpan.FromSeconds(1),
-                                                    TimeSpan.FromSeconds(3),
-                                                    TimeSpan.FromSeconds(5),
-                                                })
-                },
-                {
                     "No", HttpPolicyExtensions.HandleTransientHttpError()
-                                              .CircuitBreakerAsync(10,
+                                              .CircuitBreakerAsync(1,
                                                                    TimeSpan.FromSeconds(10))
                 },
-            };
-            services.AddPolicyRegistry(keyValuePairs);
+            });
 
             services.AddHttpClient("Test")
-                    .AddPolicyHandlerFromRegistry("Test")
                     .AddPolicyHandlerFromRegistry("No");
         }
 
