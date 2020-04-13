@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -33,10 +34,13 @@ namespace PollySample
                                               .CircuitBreakerAsync(1,
                                                                    TimeSpan.FromSeconds(10))
                 },
+                {
+                    "Test", Policy.BulkheadAsync<HttpResponseMessage>(1)
+                },
             });
 
             services.AddHttpClient("Test")
-                    .AddPolicyHandlerFromRegistry("No");
+                    .AddPolicyHandlerFromRegistry("Test");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
