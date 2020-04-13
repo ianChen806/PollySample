@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Polly;
 using Polly.Retry;
+using Polly.Timeout;
 
 namespace PollySample
 {
@@ -24,14 +25,7 @@ namespace PollySample
         {
             services.AddControllers();
 
-            var policySelector = Policy.Handle<HttpRequestException>()
-                                                    .OrResult<HttpResponseMessage>(TestPredicate)
-                                                    .WaitAndRetryAsync(new []
-                                                    {
-                                                        TimeSpan.FromSeconds(1), 
-                                                        TimeSpan.FromSeconds(3), 
-                                                        TimeSpan.FromSeconds(5), 
-                                                    });
+            var policySelector = Policy.TimeoutAsync<HttpResponseMessage>(1);
             services.AddHttpClient("Test", client =>
                     {
                     })
